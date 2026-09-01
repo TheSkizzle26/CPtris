@@ -16,7 +16,6 @@
 unsigned board_cells[BOARD_CELLS];
 bool board_dirty[BOARD_CELLS];
 
-void board_renderCell(unsigned i);
 void board_renderDirty();
 
 // ---------- IMPLEMENTATION ----------
