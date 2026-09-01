@@ -1,2 +1,2 @@
 all:
-	$(MAKE) -C test run
+	$(MAKE) -C src run
