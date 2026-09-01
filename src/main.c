@@ -2,6 +2,7 @@
 
 #include "board.c"
 #include "cell.c"
+#include "active.c"
 
 int main() {
     cp_init();
@@ -12,8 +13,10 @@ int main() {
         cp_pixels[i] = 100;
 
     cell_init();
+    active_nextPiece();
 
     while (!cp_isKeyDown(CP_KEY_CLEAR)) {
+        active_update();
         board_renderDirty();
 
         cp_refreshScreen();
