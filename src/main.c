@@ -10,7 +10,7 @@ int main() {
 
     // clear screen
     for (unsigned i = 0; i < (unsigned)cp_getPixelCount(); i++)
-        cp_pixels[i] = 100;
+        cp_pixels[i] = 0;
 
     cell_init();
     active_nextPiece();
