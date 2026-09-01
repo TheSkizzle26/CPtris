@@ -176,6 +176,7 @@ unsigned active_getFramesPerGridcell();
 void active_nextHash();
 void active_nextPiece();
 void active_markDirty();
+bool active_isColliding();
 void active_fall();
 void active_tick();
 void active_render();
@@ -184,7 +185,7 @@ void active_render();
 
 unsigned active_getFramesPerGridcell() {
     // TODO: use level number
-    return active_framesPerGridcell[0];
+    return active_framesPerGridcell[9];
 }
 
 void active_nextHash() {
@@ -192,8 +193,6 @@ void active_nextHash() {
 }
 
 void active_nextPiece() {
-    active_markDirty();
-
     unsigned piece = active_hash % 7;
     if (piece == active_lastPiece) {
         active_nextHash();
@@ -203,8 +202,8 @@ void active_nextPiece() {
     active_lastPiece = active_current.piece;
     
     active_current.changed = true;
-    active_current.x = 2;
-    active_current.y = 2;
+    active_current.x = 0;
+    active_current.y = 0;
     active_current.rotation = 0;
     active_current.gravityTicks = active_getFramesPerGridcell();
     active_current.piece = piece;
@@ -224,6 +223,27 @@ void active_markDirty() {
     }
 }
 
+bool active_isColliding() {
+    for (unsigned dy = 0; dy < active_current.size; dy++) {
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            if (active_current.rotations[
+                active_current.rotation * 16 + dy * 4 + dx
+            ]) {
+                const unsigned gx = active_current.x + dx;
+                const unsigned gy = active_current.y + dy;
+
+                if (gx < 0 || gy < 0 || gx >= BOARD_WIDTH || gy >= BOARD_HEIGHT)
+                    return true;
+
+                if (board_getCell(gy, gy))
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void active_fall() {
     active_current.gravityTicks--;
 
@@ -234,6 +254,9 @@ void active_fall() {
         
         active_current.y++;
         active_current.changed = true;
+
+        if (active_isColliding())
+            active_nextPiece();
     }
 }
 
@@ -241,8 +264,10 @@ void active_tick() {
     active_nextHash();
 
     // debug
-    if (cp_isKeyDown(CP_KEY_EXE))
+    if (cp_isKeyDown(CP_KEY_EXE)) {
+        active_markDirty();
         active_nextPiece();
+    }
 
     active_fall();
 
@@ -258,7 +283,7 @@ void active_render() {
     for (unsigned dy = 0; dy < active_current.size; dy++) {
         for (unsigned dx = 0; dx < active_current.size; dx++) {
             if (active_current.rotations[
-                active_current.rotation * 4 * active_current.size + dy * 4 + dx
+                active_current.rotation * 16 + dy * 4 + dx
             ]) {
                 cell_render(active_current.cellType, active_current.x + dx, active_current.y + dy);
             }
