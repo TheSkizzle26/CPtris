@@ -1,0 +1,5 @@
+CompileFlags:
+  Add: 
+    - "-DSYSTEM_PC"
+    - "-std=c99"
+    - "-I../cplib"
