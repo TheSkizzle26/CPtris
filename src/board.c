@@ -16,9 +16,14 @@
 unsigned board_cells[BOARD_CELLS];
 bool board_dirty[BOARD_CELLS];
 
+void board_markDirty(unsigned x, unsigned y);
 void board_renderDirty();
 
 // ---------- IMPLEMENTATION ----------
+
+void board_markDirty(const unsigned x, const unsigned y) {
+    board_dirty[y * BOARD_WIDTH + x] = 1;
+}
 
 void board_renderDirty() {
     unsigned i = 0;

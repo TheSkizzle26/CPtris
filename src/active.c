@@ -4,12 +4,20 @@
 #include <stdbool.h>
 #include <cp_base.c>
 
+#include "cell.c"
+#include "board.c"
+
 // ------------ INTERFACE -------------
 
 struct {
+    bool changed;
+    unsigned x;
+    unsigned y;
+    unsigned rotation;
     unsigned piece;
+    unsigned cellType;
     unsigned size;
-    unsigned rotations[64];
+    bool *rotations;
 } active_current;
 
 unsigned active_lastPiece;
@@ -19,36 +27,183 @@ struct {
     bool next;
 } active_lastInputs;
 
+bool active_templateCells[7][64] = {
+    { // T
+        0, 0, 0, 0,
+        1, 1, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+
+        0, 1, 0, 0,
+        1, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+
+        0, 1, 0, 0,
+        1, 1, 1, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        0, 1, 0, 0,
+        0, 1, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+    },
+    { // J
+        0, 0, 0, 0,
+        1, 1, 1, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 0,
+
+        0, 1, 0, 0,
+        0, 1, 0, 0,
+        1, 1, 0, 0,
+        0, 0, 0, 0,
+
+        1, 0, 0, 0,
+        1, 1, 1, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        0, 1, 1, 0,
+        0, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+    },
+    { // Z
+        0, 0, 0, 0,
+        1, 1, 0, 0,
+        0, 1, 1, 0,
+        0, 0, 0, 0,
+
+        0, 0, 1, 0,
+        0, 1, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+    },
+    { // O
+        1, 1, 0, 0,
+        1, 1, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+    },
+    { // S
+        0, 0, 0, 0,
+        0, 1, 1, 0,
+        1, 1, 0, 0,
+        0, 0, 0, 0,
+
+        1, 0, 0, 0,
+        1, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+    },
+    { // L
+        0, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 1, 1, 0,
+        0, 0, 0, 0,
+
+        0, 0, 0, 0,
+        1, 1, 1, 0,
+        1, 0, 0, 0,
+        0, 0, 0, 0,
+
+        1, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 0,
+
+        0, 0, 1, 0,
+        1, 1, 1, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+    },
+    { // I
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+
+        0, 0, 1, 0,
+        0, 0, 1, 0,
+        0, 0, 1, 0,
+        0, 0, 1, 0,
+    }
+};
+
+unsigned active_templateRotations[7] = {
+    4, // T
+    4, // J
+    2, // Z
+    1, // O
+    2, // S
+    4, // L
+    2  // I
+};
+
+unsigned active_templateSizes[7] = {
+    3, // T
+    3, // J
+    3, // Z
+    2, // O
+    3, // S
+    3, // L
+    4  // I
+};
+
+unsigned active_templateCellTypes[7] = {
+    3, // T
+    2, // J
+    1, // Z
+    3, // O
+    2, // S
+    1, // L
+    3  // I
+};
+
 void active_nextHash();
 void active_nextPiece();
-void active_generateRotations();
+void active_markDirty();
 void active_update();
 void active_render();
 
 // ---------- IMPLEMENTATION ----------
-
-#include <stdio.h>
 
 void active_nextHash() {
     active_hash = (active_hash << 5) + active_hash + cp_getTick() % 128;
 }
 
 void active_nextPiece() {
-    unsigned piece = active_hash % 7;
+    active_markDirty();
 
+    unsigned piece = active_hash % 7;
     if (piece == active_lastPiece) {
         active_nextHash();
         piece = active_hash % 7;
     }
 
     active_lastPiece = active_current.piece;
-
-    printf("Piece: %u\n", piece);
-    fflush(stdout);
+    
+    active_current.changed = true;
+    active_current.x = 2;
+    active_current.y = 2;
+    active_current.rotation = 0;
+    active_current.piece = piece;
+    active_current.cellType = active_templateCellTypes[piece];
+    active_current.size = active_templateSizes[piece];
+    active_current.rotations = active_templateCells[piece];
 }
 
-void active_generateRotations() {
+void active_markDirty() {
+    if (!active_current.rotations)
+        return;
 
+    for (unsigned dy = 0; dy < active_current.size; dy++) {
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            board_markDirty(active_current.x + dx, active_current.y + dy);
+        }
+    }
 }
 
 void active_update() {
@@ -57,11 +212,24 @@ void active_update() {
     if (cp_isKeyDown(CP_KEY_EXE))
         active_nextPiece();
 
+    if (active_current.changed) {
+        active_current.changed = true;
+        active_render();
+    }
+
     active_lastInputs.next = cp_isKeyDown(CP_KEY_EXE);
 }
 
 void active_render() {
-    
+    for (unsigned dy = 0; dy < active_current.size; dy++) {
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            if (active_current.rotations[
+                active_current.rotation * 4 * active_current.size + dy * 4 + dx
+            ]) {
+                cell_render(active_current.cellType, active_current.x + dx, active_current.y + dy);
+            }
+        }
+    }
 }
 
 #endif
