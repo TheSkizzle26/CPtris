@@ -14,6 +14,7 @@ struct {
     unsigned x;
     unsigned y;
     unsigned rotation;
+    unsigned gravityTicks;
     unsigned piece;
     unsigned cellType;
     unsigned size;
@@ -162,13 +163,29 @@ unsigned active_templateCellTypes[7] = {
     3  // I
 };
 
+unsigned active_framesPerGridcell[30] = {
+    48, 43, 38, 33, 28,
+    23, 18, 13, 8,  6,
+    5,  5,  5,  4,  4,
+    4,  3,  3,  3,  2,
+    2,  2,  2,  2,  2,
+    2,  2,  2,  2,  1
+};
+
+unsigned active_getFramesPerGridcell();
 void active_nextHash();
 void active_nextPiece();
 void active_markDirty();
+void active_fall();
 void active_tick();
 void active_render();
 
 // ---------- IMPLEMENTATION ----------
+
+unsigned active_getFramesPerGridcell() {
+    // TODO: use level number
+    return active_framesPerGridcell[0];
+}
 
 void active_nextHash() {
     active_hash = (active_hash << 5) + active_hash + cp_getTick() % 128;
@@ -189,6 +206,7 @@ void active_nextPiece() {
     active_current.x = 2;
     active_current.y = 2;
     active_current.rotation = 0;
+    active_current.gravityTicks = active_getFramesPerGridcell();
     active_current.piece = piece;
     active_current.cellType = active_templateCellTypes[piece];
     active_current.size = active_templateSizes[piece];
@@ -206,21 +224,37 @@ void active_markDirty() {
     }
 }
 
+void active_fall() {
+    active_current.gravityTicks--;
+
+    if (!active_current.gravityTicks) {
+        active_current.gravityTicks = active_getFramesPerGridcell();
+        
+        active_markDirty();
+        
+        active_current.y++;
+        active_current.changed = true;
+    }
+}
+
 void active_tick() {
     active_nextHash();
 
+    // debug
     if (cp_isKeyDown(CP_KEY_EXE))
         active_nextPiece();
 
-    if (active_current.changed) {
-        active_current.changed = true;
-        active_render();
-    }
+    active_fall();
 
     active_lastInputs.next = cp_isKeyDown(CP_KEY_EXE);
 }
 
 void active_render() {
+    if (!active_current.changed)
+        return;
+
+    active_current.changed = false;
+
     for (unsigned dy = 0; dy < active_current.size; dy++) {
         for (unsigned dx = 0; dx < active_current.size; dx++) {
             if (active_current.rotations[

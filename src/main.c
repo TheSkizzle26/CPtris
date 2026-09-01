@@ -18,6 +18,7 @@ int main() {
     while (!cp_isKeyDown(CP_KEY_CLEAR)) {
         active_tick();
         board_renderDirty();
+        active_render();
 
         cp_refreshScreen();
         cp_finishFrame();
