@@ -165,7 +165,7 @@ unsigned active_templateCellTypes[7] = {
 void active_nextHash();
 void active_nextPiece();
 void active_markDirty();
-void active_update();
+void active_tick();
 void active_render();
 
 // ---------- IMPLEMENTATION ----------
@@ -206,7 +206,7 @@ void active_markDirty() {
     }
 }
 
-void active_update() {
+void active_tick() {
     active_nextHash();
 
     if (cp_isKeyDown(CP_KEY_EXE))

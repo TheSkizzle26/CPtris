@@ -16,7 +16,7 @@ int main() {
     active_nextPiece();
 
     while (!cp_isKeyDown(CP_KEY_CLEAR)) {
-        active_update();
+        active_tick();
         board_renderDirty();
 
         cp_refreshScreen();
