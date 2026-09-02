@@ -16,12 +16,18 @@
 unsigned board_cells[BOARD_CELLS];
 bool board_dirty[BOARD_CELLS];
 
+void board_reset();
 unsigned board_getCell(unsigned x, unsigned y);
 void board_setCell(unsigned x, unsigned y, unsigned type);
 void board_markDirty(unsigned x, unsigned y);
 void board_renderDirty();
 
 // ---------- IMPLEMENTATION ----------
+
+void board_reset() {
+    for (unsigned i = 0; i < BOARD_CELLS; i++)
+        board_cells[i] = 0;
+}
 
 unsigned board_getCell(const unsigned x, const unsigned y) {
     return board_cells[y * BOARD_WIDTH + x];

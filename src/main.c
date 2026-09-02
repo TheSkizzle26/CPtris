@@ -3,6 +3,7 @@
 #include "board.c"
 #include "cell.c"
 #include "active.c"
+#include "progress.c"
 
 int main() {
     cp_init();
@@ -13,7 +14,7 @@ int main() {
         cp_pixels[i] = 0;
 
     cell_init();
-    active_nextPiece();
+    progress_reset();
 
     while (!cp_isKeyDown(CP_KEY_CLEAR)) {
         active_tick();

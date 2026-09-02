@@ -46,7 +46,7 @@ uint8_t cell_templates[] = {
 };
 
 void cell_init();
-void cell_generate(uint16_t lightColor, uint16_t darkColor);
+void cell_generateAtlas(uint16_t lightColor, uint16_t darkColor);
 void cell_render(unsigned type, unsigned x, unsigned y);
 
 // ---------- IMPLEMENTATION ----------
@@ -57,11 +57,9 @@ void cell_init() {
     // empty first type
     for (unsigned i = 0; i < CELL_PIXELS; i++)
         cell_atlas[i] = 0;
-
-    cell_generate(CELL_COLOR(100, 176, 255), CELL_COLOR(66, 64, 255));
 }
 
-void cell_generate(const uint16_t lightColor, const uint16_t darkColor) {
+void cell_generateAtlas(const uint16_t lightColor, const uint16_t darkColor) {
     const uint16_t palette[3] = {-1, lightColor, darkColor};
 
     // gcc just sets all values manually :)

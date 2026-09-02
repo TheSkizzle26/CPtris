@@ -246,10 +246,24 @@ bool active_isColliding() {
 void active_place() {
     const unsigned rotationOffset = active_current.rotation * 16;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++)
-        for (unsigned dx = 0; dx < active_current.size; dx++)
+    for (unsigned dy = 0; dy < active_current.size; dy++) {
+        bool full = true;
+
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            const unsigned gx = active_current.x + dx;
+            const unsigned gy = active_current.y + dy;
+
             if (active_current.rotations[rotationOffset + dy*4 + dx])
-                board_setCell(active_current.x + dx, active_current.y + dy, active_current.cellType);
+                board_setCell(gx, gy, active_current.cellType);
+
+            if (!board_getCell(gx, gy))
+                full = false;
+        }
+
+        if (full) {
+
+        }
+    }
 }
 
 void active_fall() {
