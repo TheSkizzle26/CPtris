@@ -217,19 +217,17 @@ void active_markDirty() {
     if (!active_current.rotations)
         return;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++) {
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
+    for (unsigned dy = 0; dy < active_current.size; dy++)
+        for (unsigned dx = 0; dx < active_current.size; dx++)
             board_markDirty(active_current.x + dx, active_current.y + dy);
-        }
-    }
 }
 
 bool active_isColliding() {
+    const unsigned rotationOffset = active_current.rotation * 16;
+
     for (unsigned dy = 0; dy < active_current.size; dy++) {
         for (unsigned dx = 0; dx < active_current.size; dx++) {
-            if (active_current.rotations[
-                active_current.rotation * 16 + dy * 4 + dx
-            ]) {
+            if (active_current.rotations[rotationOffset + dy*4 + dx]) {
                 const unsigned gx = active_current.x + dx;
                 const unsigned gy = active_current.y + dy;
 
@@ -246,15 +244,12 @@ bool active_isColliding() {
 }
 
 void active_place() {
-    for (unsigned dy = 0; dy < active_current.size; dy++) {
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
-            if (active_current.rotations[
-                active_current.rotation * 16 + dy * 4 + dx
-            ]) {
+    const unsigned rotationOffset = active_current.rotation * 16;
+
+    for (unsigned dy = 0; dy < active_current.size; dy++)
+        for (unsigned dx = 0; dx < active_current.size; dx++)
+            if (active_current.rotations[rotationOffset + dy*4 + dx])
                 board_setCell(active_current.x + dx, active_current.y + dy, active_current.cellType);
-            }
-        }
-    }
 }
 
 void active_fall() {
@@ -295,17 +290,14 @@ void active_render() {
     if (!active_current.changed)
         return;
 
-    active_current.changed = false;
+    const unsigned rotationOffset = active_current.rotation * 16;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++) {
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
-            if (active_current.rotations[
-                active_current.rotation * 16 + dy * 4 + dx
-            ]) {
+    for (unsigned dy = 0; dy < active_current.size; dy++)
+        for (unsigned dx = 0; dx < active_current.size; dx++)
+            if (active_current.rotations[rotationOffset + dy*4 + dx])
                 cell_render(active_current.cellType, active_current.x + dx, active_current.y + dy);
-            }
-        }
-    }
+
+    active_current.changed = false;
 }
 
 #endif
