@@ -209,14 +209,16 @@ void active_nextPiece() {
 
     active_lastPiece = active_current.piece;
     
+    const unsigned size = active_templateSizes[piece];
+
     active_current.changed = true;
-    active_current.x = (BOARD_WIDTH - active_templateSizes[piece]) >> 1;
-    active_current.y = 0;
+    active_current.x = (BOARD_WIDTH - size) >> 1;
+    active_current.y = size - 2;
     active_current.rotation = 0;
     active_current.gravityTicks = active_getFramesPerGridcell();
     active_current.piece = piece;
     active_current.cellType = active_templateCellTypes[piece];
-    active_current.size = active_templateSizes[piece];
+    active_current.size = size;
     active_current.rotationCount = active_templateRotations[piece];
     active_current.rotations = active_templateCells[piece];
 }
