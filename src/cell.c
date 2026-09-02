@@ -6,9 +6,9 @@
 // ------------ INTERFACE -------------
 
 #define CELL_COLOR(r, g, b) ( \
-    (r & 0b11111000) << 8 | \
-    (g & 0b11111100) << 3 | \
-    (b & 0b11111000) >> 3 \
+    ((r) & 0b11111000) << 8 | \
+    ((g) & 0b11111100) << 3 | \
+    ((b) & 0b11111000) >> 3 \
 )
 
 // does not include spacing between cells
