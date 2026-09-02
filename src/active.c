@@ -20,8 +20,10 @@ struct {
 } active_current;
 
 struct {
-    unsigned left;
-    unsigned right;
+    unsigned leftTicks;
+    unsigned rightTicks;
+    bool moveLeft;
+    bool moveRight;
 } active_das;
 
 unsigned active_lastPiece;
@@ -181,6 +183,7 @@ void active_place();
 void active_fall();
 void active_attemptMove(signed movement);
 void active_attemptRotation(const signed rotation);
+void active_DAS();
 void active_notStalled();
 void active_tick();
 void active_render();
@@ -360,6 +363,27 @@ void active_attemptRotation(const signed rotation) {
     active_current.changed = true;
 }
 
+void active_DAS() {
+    active_das.moveLeft = false;
+    active_das.moveRight = false;
+
+    if (input_current.left) {
+        active_das.leftTicks++;
+        if (active_das.leftTicks == 16) {
+            active_das.moveLeft = true;
+            active_das.leftTicks = 10;
+        }
+    } else active_das.leftTicks = 0;
+
+    if (input_current.right) {
+        active_das.rightTicks++;
+        if (active_das.rightTicks == 16) {
+            active_das.moveRight = true;
+            active_das.rightTicks = 10;
+        }
+    } else active_das.rightTicks = 0;
+}
+
 void active_notStalled() {
     const signed rotation = (
         (input_current.a && !input_last.a) -
@@ -372,6 +396,9 @@ void active_notStalled() {
     const signed movement = (
         (input_current.right && !input_last.right) -
         (input_current.left && !input_last.left)
+    ) + (
+        active_das.moveRight -
+        active_das.moveLeft
     );
 
     if (movement)
@@ -382,6 +409,7 @@ void active_notStalled() {
 
 void active_tick() {
     active_nextHash();
+    active_DAS();
 
     if (!active_current.stallTicks)
         active_notStalled();
