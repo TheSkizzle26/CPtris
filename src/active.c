@@ -7,7 +7,6 @@
 
 struct {
     bool changed;
-    unsigned stallTicks;
     unsigned x;
     unsigned y;
     unsigned rotation;
@@ -26,6 +25,7 @@ struct {
     bool moveRight;
 } active_das;
 
+unsigned active_stallTicks;
 unsigned active_lastPiece;
 unsigned active_hash = 5381;
 
@@ -173,6 +173,15 @@ unsigned active_framesPerGridcell[30] = {
     2,  2,  2,  2,  1
 };
 
+unsigned active_AREDelay[] = {
+    0, 0, // invisible
+    18, 18, 18, 18,
+    16, 16, 16, 16,
+    14, 14, 14, 14,
+    12, 12, 12, 12,
+    10, 10, 10, 10
+};
+
 unsigned active_getFramesPerGridcell();
 void active_stall(unsigned ticks);
 void active_nextHash();
@@ -203,7 +212,7 @@ unsigned active_getFramesPerGridcell() {
 }
 
 void active_stall(const unsigned ticks) {
-    active_current.stallTicks = ticks;
+    active_stallTicks = ticks;
 }
 
 void active_nextHash() {
@@ -270,14 +279,20 @@ void active_place() {
     const unsigned rotationOffset = active_current.rotation * 16;
     unsigned dirtyCount = 0;
     unsigned clearCount = 0;
+    unsigned pieceBottom = 0;
 
     for (unsigned dy = 0; dy < active_current.size; dy++) {
         const unsigned gy = active_current.y + dy;
         if (gy >= BOARD_HEIGHT) continue;
 
-        for (unsigned dx = 0; dx < active_current.size; dx++)
-            if (active_current.rotations[rotationOffset + dy*4 + dx])
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            if (active_current.rotations[rotationOffset + dy*4 + dx]) {
                 board_setCell(active_current.x + dx, gy, active_current.cellType);
+
+                if (gy > pieceBottom)
+                    pieceBottom = gy;
+            }
+        }
 
         bool full = true;
 
@@ -309,6 +324,8 @@ void active_place() {
 
     if (clearCount)
         progress_registerLineClears(clearCount);
+
+    active_stall(active_AREDelay[pieceBottom]);
 }
 
 void active_fall() {
@@ -325,8 +342,7 @@ void active_fall() {
         if (active_isColliding()) {
             active_current.y--;
             active_place();
-
-            active_nextPiece();
+            // next piece is spawned after ARE
         }
     }
 }
@@ -411,11 +427,14 @@ void active_tick() {
     active_nextHash();
     active_DAS();
 
-    if (!active_current.stallTicks)
-        active_notStalled();
+    if (active_stallTicks) {
+        active_stallTicks--;
 
-    if (active_current.stallTicks)
-        active_current.stallTicks--;
+        if (!active_stallTicks)
+            active_nextPiece();
+    } else {
+        active_notStalled();
+    }
 }
 
 void active_render() {
