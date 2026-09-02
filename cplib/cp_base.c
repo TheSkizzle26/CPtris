@@ -19,6 +19,7 @@ size_t cp_tick = 0;
 void *cp_allocate(size_t size);
 void cp_free(void *pointer);
 void cp_copyMemory(void *source, size_t size, void *destination);
+void cp_setMemory(uint8_t value, size_t count, void *target);
 void cp_init();
 void cp_quit();
 void cp_setTargetFPS(int fps);

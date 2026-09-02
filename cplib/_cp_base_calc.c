@@ -11,6 +11,7 @@
 #define cp_calc_malloc ((void *(*)(uint32_t))0x800CFB00)
 #define cp_calc_free ((void (*)(void*))0x800A76FC)
 #define cp_calc_memcpy ((void *(*)(void*, const void*, int))0x800A78AC)
+#define cp_calc_memset ((void *(*)(void*, int, int))0x800A7FC0)
 #define cp_calc_fopen ((int (*)(char*, int))0x80057854)
 #define cp_calc_fclose ((int (*)(int))0x80057912)
 #define cp_calc_fread ((int (*)(int, void*, int))0x800578A2)
@@ -71,6 +72,10 @@ void cp_free(void *pointer) {
 
 void cp_copyMemory(void *source, const size_t size, void *destination) {
     cp_calc_memcpy(destination, source, size);
+}
+
+void cp_setMemory(uint8_t value, size_t count, void *target) {
+    cp_calc_memset(target, value, count);
 }
 
 void cp_init() {

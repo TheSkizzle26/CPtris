@@ -60,6 +60,10 @@ void cp_copyMemory(void *source, const size_t size, void *destination) {
     memcpy(destination, source, size);
 }
 
+void cp_setMemory(uint8_t value, size_t count, void *target) {
+    memset(target, value, count);
+}
+
 void cp_init() {
     InitWindow(cp_getRenderWidth(), cp_getRenderHeight(), "");
 
