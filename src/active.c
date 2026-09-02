@@ -18,6 +18,7 @@ struct {
     unsigned piece;
     unsigned cellType;
     unsigned size;
+    unsigned rotationCount;
     bool *rotations;
 } active_current;
 
@@ -25,7 +26,11 @@ unsigned active_lastPiece;
 unsigned active_hash = 5381;
 
 struct {
-    bool next;
+    // like the NES controller
+    bool left;
+    bool right;
+    bool a;
+    bool b;
 } active_lastInputs;
 
 bool active_templateCells[7][64] = {
@@ -179,6 +184,8 @@ void active_markDirty();
 bool active_isColliding();
 void active_place();
 void active_fall();
+void active_attemptMove(signed movement);
+void active_attemptRotation(const signed rotation);
 void active_tick();
 void active_render();
 
@@ -210,6 +217,7 @@ void active_nextPiece() {
     active_current.piece = piece;
     active_current.cellType = active_templateCellTypes[piece];
     active_current.size = active_templateSizes[piece];
+    active_current.rotationCount = active_templateRotations[piece];
     active_current.rotations = active_templateCells[piece];
 }
 
@@ -261,7 +269,7 @@ void active_place() {
         }
 
         if (full) {
-
+            // TODO
         }
     }
 }
@@ -286,18 +294,65 @@ void active_fall() {
     }
 }
 
+void active_attemptMove(const signed movement) {
+    active_current.x += movement;
+    const bool isColliding = active_isColliding();
+    active_current.x -= movement;
+
+    if (isColliding)
+        return;
+
+    active_markDirty();
+    active_current.x += movement;
+    active_current.changed = true;
+}
+
+void active_attemptRotation(const signed rotation) {
+    const unsigned old = active_current.rotation;
+    const unsigned new = (active_current.rotation + rotation) % active_current.rotationCount;
+
+    active_current.rotation = new;
+    const bool isColliding = active_isColliding();
+    active_current.rotation = old;
+
+    if (isColliding)
+        return;
+
+    active_markDirty();
+    active_current.rotation = new;
+    active_current.changed = true;
+}
+
 void active_tick() {
     active_nextHash();
 
-    // debug
-    if (cp_isKeyDown(CP_KEY_EXE)) {
-        active_markDirty();
-        active_nextPiece();
-    }
+    const bool inputLeft = cp_isKeyDown(CP_KEY_1);
+    const bool inputRight = cp_isKeyDown(CP_KEY_2);
+    const bool inputA = cp_isKeyDown(CP_KEY_EXE);
+    const bool inputB = cp_isKeyDown(CP_KEY_EXP);
+
+    const signed rotation = (
+        (inputA && !active_lastInputs.a) -
+        (inputB && !active_lastInputs.b)
+    );
+
+    if (rotation)
+        active_attemptRotation(rotation);
+
+    const signed movement = (
+        (inputRight && !active_lastInputs.right) -
+        (inputLeft && !active_lastInputs.left)
+    );
+
+    if (movement)
+        active_attemptMove(movement);
 
     active_fall();
 
-    active_lastInputs.next = cp_isKeyDown(CP_KEY_EXE);
+    active_lastInputs.left = inputLeft;
+    active_lastInputs.right = inputRight;
+    active_lastInputs.a = inputA;
+    active_lastInputs.b = inputB;
 }
 
 void active_render() {
