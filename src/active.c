@@ -236,7 +236,7 @@ bool active_isColliding() {
                 if (gx >= BOARD_WIDTH || gy >= BOARD_HEIGHT)
                     return true;
 
-                if (board_getCell(gy, gy))
+                if (board_getCell(gx, gy))
                     return true;
             }
         }
@@ -251,7 +251,7 @@ void active_place() {
             if (active_current.rotations[
                 active_current.rotation * 16 + dy * 4 + dx
             ]) {
-
+                board_setCell(active_current.x + dx, active_current.y + dy, active_current.cellType);
             }
         }
     }
