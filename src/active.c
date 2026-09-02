@@ -27,11 +27,11 @@ unsigned active_hash = 5381;
 
 struct {
     // like the NES controller
-    bool left;
-    bool right;
-    bool a;
-    bool b;
-} active_lastInputs;
+    bool lastLeft;
+    bool lastRight;
+    bool lastA;
+    bool lastB;
+} active_input;
 
 bool active_templateCells[7][64] = {
     { // T
@@ -105,11 +105,6 @@ bool active_templateCells[7][64] = {
         0, 0, 0, 0,
     },
     { // L
-        0, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 1, 1, 0,
-        0, 0, 0, 0,
-
         0, 0, 0, 0,
         1, 1, 1, 0,
         1, 0, 0, 0,
@@ -123,6 +118,11 @@ bool active_templateCells[7][64] = {
         0, 0, 1, 0,
         1, 1, 1, 0,
         0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        0, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 1, 1, 0,
         0, 0, 0, 0,
     },
     { // I
@@ -210,7 +210,7 @@ void active_nextPiece() {
     active_lastPiece = active_current.piece;
     
     active_current.changed = true;
-    active_current.x = 0;
+    active_current.x = (BOARD_WIDTH - active_templateSizes[piece]) >> 1;
     active_current.y = 0;
     active_current.rotation = 0;
     active_current.gravityTicks = active_getFramesPerGridcell();
@@ -347,16 +347,16 @@ void active_tick() {
     const bool inputB = cp_isKeyDown(CP_KEY_EXP);
 
     const signed rotation = (
-        (inputA && !active_lastInputs.a) -
-        (inputB && !active_lastInputs.b)
+        (inputA && !active_input.lastA) -
+        (inputB && !active_input.lastB)
     );
 
     if (rotation)
         active_attemptRotation(rotation);
 
     const signed movement = (
-        (inputRight && !active_lastInputs.right) -
-        (inputLeft && !active_lastInputs.left)
+        (inputRight && !active_input.lastRight) -
+        (inputLeft && !active_input.lastLeft)
     );
 
     if (movement)
@@ -364,10 +364,10 @@ void active_tick() {
 
     active_fall();
 
-    active_lastInputs.left = inputLeft;
-    active_lastInputs.right = inputRight;
-    active_lastInputs.a = inputA;
-    active_lastInputs.b = inputB;
+    active_input.lastLeft = inputLeft;
+    active_input.lastRight = inputRight;
+    active_input.lastA = inputA;
+    active_input.lastB = inputB;
 }
 
 void active_render() {
@@ -376,7 +376,7 @@ void active_render() {
 
     const unsigned rotationOffset = active_current.rotation * 16;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++)
+    for (unsigned dy = active_current.y < 2 ? 2 - active_current.y : 0; dy < active_current.size; dy++)
         for (unsigned dx = 0; dx < active_current.size; dx++)
             if (active_current.rotations[rotationOffset + dy*4 + dx])
                 cell_render(active_current.cellType, active_current.x + dx, active_current.y + dy);

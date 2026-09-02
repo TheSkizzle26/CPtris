@@ -9,7 +9,7 @@
 // ------------ INTERFACE -------------
 
 #define BOARD_WIDTH 10
-#define BOARD_HEIGHT 20
+#define BOARD_HEIGHT 22 // 2 invisible lines
 #define BOARD_CELLS (BOARD_WIDTH*BOARD_HEIGHT)
 
 // TODO: check if other data types is faster
@@ -42,9 +42,9 @@ void board_markDirty(const unsigned x, const unsigned y) {
 }
 
 void board_renderDirty() {
-    unsigned i = 0;
+    unsigned i = BOARD_WIDTH*2;
 
-    for (unsigned y = 0; y < BOARD_HEIGHT; y++) {
+    for (unsigned y = 2; y < BOARD_HEIGHT; y++) {
         for (unsigned x = 0; x < BOARD_WIDTH; x++) {
             if (board_dirty[i]) {
                 board_dirty[i] = false;
