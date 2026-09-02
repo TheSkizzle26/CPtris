@@ -19,6 +19,11 @@ struct {
     bool *rotations;
 } active_current;
 
+struct {
+    unsigned left;
+    unsigned right;
+} active_das;
+
 unsigned active_lastPiece;
 unsigned active_hash = 5381;
 
@@ -176,6 +181,7 @@ void active_place();
 void active_fall();
 void active_attemptMove(signed movement);
 void active_attemptRotation(const signed rotation);
+void active_notStalled();
 void active_tick();
 void active_render();
 
@@ -202,8 +208,8 @@ void active_nextHash() {
 }
 
 void active_nextPiece() {
-    unsigned piece = active_hash % 7;
-    if (piece == active_lastPiece) {
+    unsigned piece = active_hash % 8;
+    if ((piece == active_lastPiece) || (piece == 7 /* dummy */)) {
         active_nextHash();
         piece = active_hash % 7;
     }
@@ -354,28 +360,31 @@ void active_attemptRotation(const signed rotation) {
     active_current.changed = true;
 }
 
+void active_notStalled() {
+    const signed rotation = (
+        (input_current.a && !input_last.a) -
+        (input_current.b && !input_last.b)
+    );
+
+    if (rotation)
+        active_attemptRotation(rotation);
+
+    const signed movement = (
+        (input_current.right && !input_last.right) -
+        (input_current.left && !input_last.left)
+    );
+
+    if (movement)
+        active_attemptMove(movement);
+
+    active_fall();
+}
+
 void active_tick() {
     active_nextHash();
 
-    if (!active_current.stallTicks) {
-        const signed rotation = (
-            (input_current.a && !input_last.a) -
-            (input_current.b && !input_last.b)
-        );
-
-        if (rotation)
-            active_attemptRotation(rotation);
-
-        const signed movement = (
-            (input_current.right && !input_last.right) -
-            (input_current.left && !input_last.left)
-        );
-
-        if (movement)
-            active_attemptMove(movement);
-
-        active_fall();
-    }
+    if (!active_current.stallTicks)
+        active_notStalled();
 
     if (active_current.stallTicks)
         active_current.stallTicks--;
