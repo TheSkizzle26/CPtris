@@ -2,7 +2,6 @@
 #define ACTIVE
 
 #include <stdbool.h>
-#include <cp_base.c>
 
 // ------------ INTERFACE -------------
 
@@ -181,6 +180,8 @@ void active_tick();
 void active_render();
 
 // ---------- IMPLEMENTATION ----------
+
+#include <cp_base.c>
 
 #include "main.c"
 #include "input.c"

@@ -2,7 +2,6 @@
 #define CELL
 
 #include <stdint.h>
-#include <cp_base.c>
 
 // ------------ INTERFACE -------------
 
@@ -50,6 +49,8 @@ void cell_generateAtlas(uint16_t lightColor, uint16_t darkColor);
 void cell_render(unsigned type, unsigned x, unsigned y);
 
 // ---------- IMPLEMENTATION ----------
+
+#include <cp_base.c>
 
 void cell_init() {
     cell_atlas = cp_allocate(CELL_PIXELS * 4 * sizeof(uint16_t));

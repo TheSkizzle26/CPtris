@@ -1,7 +1,6 @@
 #ifndef PROGRESS
 #define PROGRESS
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "cell.c"

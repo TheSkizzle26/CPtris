@@ -2,9 +2,6 @@
 #define BOARD
 
 #include <stdbool.h>
-#include <stdint.h>
-
-#include "cell.c"
 
 // ------------ INTERFACE -------------
 
@@ -23,6 +20,8 @@ void board_markDirty(unsigned x, unsigned y);
 void board_renderDirty();
 
 // ---------- IMPLEMENTATION ----------
+
+#include "cell.c"
 
 void board_reset() {
     for (unsigned i = 0; i < BOARD_CELLS; i++)
