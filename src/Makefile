@@ -12,7 +12,7 @@ OUT_CALC := cptris.hhk
 
 calc:
 	$(ASM) ../cplib/cp_calc_div.s ../cplib/cp_calc_getKey.s -o cp_calc.o
-	$(CALC_CC) $(CC_FLAGS) $(LD_FLAGS) -ffreestanding -D SYSTEM_CALC main.c cp_calc.o -o $(OUT_CALC)
+	$(CALC_CC) $(CC_FLAGS) $(LD_FLAGS) -ffreestanding -m4a-nofpu -D SYSTEM_CALC main.c cp_calc.o -o $(OUT_CALC)
 	$(OBJCOPY) --set-section-flags .hollyhock_name=contents,strings,readonly $(OUT_CALC) $(OUT_CALC)
 	$(OBJCOPY) --set-section-flags .hollyhock_description=contents,strings,readonly $(OUT_CALC) $(OUT_CALC)
 	$(OBJCOPY) --set-section-flags .hollyhock_author=contents,strings,readonly $(OUT_CALC) $(OUT_CALC)

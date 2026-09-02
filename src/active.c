@@ -177,6 +177,7 @@ void active_nextHash();
 void active_nextPiece();
 void active_markDirty();
 bool active_isColliding();
+void active_place();
 void active_fall();
 void active_tick();
 void active_render();
@@ -244,6 +245,18 @@ bool active_isColliding() {
     return false;
 }
 
+void active_place() {
+    for (unsigned dy = 0; dy < active_current.size; dy++) {
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            if (active_current.rotations[
+                active_current.rotation * 16 + dy * 4 + dx
+            ]) {
+
+            }
+        }
+    }
+}
+
 void active_fall() {
     active_current.gravityTicks--;
 
@@ -255,8 +268,12 @@ void active_fall() {
         active_current.y++;
         active_current.changed = true;
 
-        if (active_isColliding())
+        if (active_isColliding()) {
+            active_current.y--;
+            active_place();
+
             active_nextPiece();
+        }
     }
 }
 
