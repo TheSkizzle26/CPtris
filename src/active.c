@@ -8,6 +8,7 @@
 
 struct {
     bool changed;
+    unsigned stallTicks;
     unsigned x;
     unsigned y;
     unsigned rotation;
@@ -175,6 +176,7 @@ unsigned active_framesPerGridcell[30] = {
 };
 
 unsigned active_getFramesPerGridcell();
+void active_stall(unsigned ticks);
 void active_nextHash();
 void active_nextPiece();
 void active_markDirty();
@@ -195,6 +197,10 @@ void active_render();
 
 unsigned active_getFramesPerGridcell() {
     return active_framesPerGridcell[progress_level > 29 ? 29 : progress_level];
+}
+
+void active_stall(const unsigned ticks) {
+    active_current.stallTicks = ticks;
 }
 
 void active_nextHash() {
@@ -299,7 +305,7 @@ void active_place() {
         cp_setMemory(true, dirtyCount * BOARD_WIDTH, board_dirty);
 
     if (clearCount)
-        progress_registerLineClears(clearCount*10);
+        progress_registerLineClears(clearCount);
 }
 
 void active_fall() {
@@ -362,23 +368,28 @@ void active_tick() {
     const bool inputA = cp_isKeyDown(CP_KEY_EXE);
     const bool inputB = cp_isKeyDown(CP_KEY_EXP);
 
-    const signed rotation = (
-        (inputA && !active_input.lastA) -
-        (inputB && !active_input.lastB)
-    );
+    if (!active_current.stallTicks) {
+        const signed rotation = (
+            (inputA && !active_input.lastA) -
+            (inputB && !active_input.lastB)
+        );
 
-    if (rotation)
-        active_attemptRotation(rotation);
+        if (rotation)
+            active_attemptRotation(rotation);
 
-    const signed movement = (
-        (inputRight && !active_input.lastRight) -
-        (inputLeft && !active_input.lastLeft)
-    );
+        const signed movement = (
+            (inputRight && !active_input.lastRight) -
+            (inputLeft && !active_input.lastLeft)
+        );
 
-    if (movement)
-        active_attemptMove(movement);
+        if (movement)
+            active_attemptMove(movement);
 
-    active_fall();
+        active_fall();
+    }
+
+    if (active_current.stallTicks)
+        active_current.stallTicks--;
 
     active_input.lastLeft = inputLeft;
     active_input.lastRight = inputRight;
