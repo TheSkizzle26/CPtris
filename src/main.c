@@ -14,6 +14,7 @@ int main();
 
 #include <cp_base.c>
 
+#include "input.c"
 #include "board.c"
 #include "cell.c"
 #include "active.c"
@@ -33,6 +34,7 @@ int main() {
     progress_reset();
 
     while (!cp_isKeyDown(CP_KEY_CLEAR)) {
+        input_tick();
         active_tick();
         board_renderDirty();
         active_render();

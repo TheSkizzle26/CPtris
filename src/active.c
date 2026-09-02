@@ -23,14 +23,6 @@ struct {
 unsigned active_lastPiece;
 unsigned active_hash = 5381;
 
-struct {
-    // like the NES controller
-    bool lastLeft;
-    bool lastRight;
-    bool lastA;
-    bool lastB;
-} active_input;
-
 bool active_templateCells[7][64] = {
     { // T
         0, 0, 0, 0,
@@ -191,6 +183,7 @@ void active_render();
 // ---------- IMPLEMENTATION ----------
 
 #include "main.c"
+#include "input.c"
 #include "cell.c"
 #include "board.c"
 #include "progress.c"
@@ -363,23 +356,18 @@ void active_attemptRotation(const signed rotation) {
 void active_tick() {
     active_nextHash();
 
-    const bool inputLeft = cp_isKeyDown(CP_KEY_1);
-    const bool inputRight = cp_isKeyDown(CP_KEY_2);
-    const bool inputA = cp_isKeyDown(CP_KEY_EXE);
-    const bool inputB = cp_isKeyDown(CP_KEY_EXP);
-
     if (!active_current.stallTicks) {
         const signed rotation = (
-            (inputA && !active_input.lastA) -
-            (inputB && !active_input.lastB)
+            (input_current.a && !input_last.a) -
+            (input_current.b && !input_last.b)
         );
 
         if (rotation)
             active_attemptRotation(rotation);
 
         const signed movement = (
-            (inputRight && !active_input.lastRight) -
-            (inputLeft && !active_input.lastLeft)
+            (input_current.right && !input_last.right) -
+            (input_current.left && !input_last.left)
         );
 
         if (movement)
@@ -390,11 +378,6 @@ void active_tick() {
 
     if (active_current.stallTicks)
         active_current.stallTicks--;
-
-    active_input.lastLeft = inputLeft;
-    active_input.lastRight = inputRight;
-    active_input.lastA = inputA;
-    active_input.lastB = inputB;
 }
 
 void active_render() {
