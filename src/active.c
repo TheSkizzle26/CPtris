@@ -232,7 +232,7 @@ bool active_isColliding() {
                 const unsigned gx = active_current.x + dx;
                 const unsigned gy = active_current.y + dy;
 
-                if (gx < 0 || gy < 0 || gx >= BOARD_WIDTH || gy >= BOARD_HEIGHT)
+                if (gx >= BOARD_WIDTH || gy >= BOARD_HEIGHT)
                     return true;
 
                 if (board_getCell(gy, gy))
