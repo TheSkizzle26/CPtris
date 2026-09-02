@@ -13,7 +13,7 @@
 
 // does not include spacing between cells
 #define CELL_SIZE 7
-#define CELL_SCALE 2
+#define CELL_SCALE 3
 #define CELL_RENDER_SIZE (CELL_SIZE * CELL_SCALE)
 #define CELL_PIXELS (CELL_RENDER_SIZE * CELL_RENDER_SIZE)
 
@@ -68,7 +68,7 @@ void cell_generateAtlas(const uint16_t lightColor, const uint16_t darkColor) {
     for (unsigned type = 0; type < 3; type++) {
         for (unsigned y = 0; y < CELL_SIZE; y++) {
             for (unsigned x = 0; x < CELL_SIZE; x++) {
-                const unsigned start = (type+1)*CELL_PIXELS + y*CELL_RENDER_SIZE*3 + x*CELL_SCALE;
+                const unsigned start = (type+1)*CELL_PIXELS + y*CELL_RENDER_SIZE*CELL_SCALE + x*CELL_SCALE;
                 const uint16_t color = palette[cell_templates[type*CELL_SIZE*CELL_SIZE + y*CELL_SIZE + x]];
 
                 cell_atlas[start                       ] = color;
