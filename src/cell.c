@@ -12,8 +12,8 @@
 )
 
 // does not include spacing between cells
-#define CELL_SIZE 7 
-#define CELL_SCALE 3
+#define CELL_SIZE 7
+#define CELL_SCALE 2
 #define CELL_RENDER_SIZE (CELL_SIZE * CELL_SCALE)
 #define CELL_PIXELS (CELL_RENDER_SIZE * CELL_RENDER_SIZE)
 
