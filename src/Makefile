@@ -21,6 +21,9 @@ calc:
 pc:
 	$(PC_CC) $(CC_FLAGS) -lraylib -D SYSTEM_PC main.c -o $(OUT_PC)
 
+debug:
+	$(PC_CC) $(CC_FLAGS) -Og -fsanitize=address -lraylib -D SYSTEM_PC main.c -o $(OUT_PC)
+
 run: pc
 	./$(OUT_PC)
 

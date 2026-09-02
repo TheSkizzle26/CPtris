@@ -12,7 +12,7 @@
 #define BOARD_HEIGHT 22 // 2 invisible lines
 #define BOARD_CELLS (BOARD_WIDTH*BOARD_HEIGHT)
 
-// TODO: check if other data types is faster
+// TODO: check if other data types are faster
 unsigned board_cells[BOARD_CELLS];
 bool board_dirty[BOARD_CELLS];
 

@@ -1,11 +1,10 @@
 #ifndef PROGRESS
 #define PROGRESS
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "cell.c"
-#include "board.c"
-#include "active.c"
 
 // ------------ INTERFACE -------------
 
@@ -52,7 +51,7 @@ uint16_t progress_levelPalettes[20] = {
 
 unsigned progress_score;
 unsigned progress_level;
-unsigned progress_linesRemaining;
+unsigned progress_levelLines;
 
 void progress_reset();
 void progress_loadLevel(unsigned level);
@@ -61,23 +60,34 @@ void progress_registerLineClears(unsigned lines);
 
 // ---------- IMPLEMENTATION ----------
 
+#include <cp_base.c>
+
+#include "main.c"
+#include "board.c"
+#include "active.c"
+
 void progress_reset() {
     progress_score = 0;
     progress_level = 0;
+    progress_levelLines = 0;
 
-    progress_loadLevel(0);
+    progress_loadLevel(13);
     board_reset();
     active_nextPiece();
 }
 
 void progress_loadLevel(const unsigned level) {
     progress_level = level;
-    progress_linesRemaining = 10;
 
+    const unsigned levelMod = level % 10;
     cell_generateAtlas(
-        progress_levelPalettes[level*2    ],
-        progress_levelPalettes[level*2 + 1]
+        progress_levelPalettes[levelMod*2    ],
+        progress_levelPalettes[levelMod*2 + 1]
     );
+
+    // fully re-render
+    cp_setMemory(true, BOARD_CELLS, board_dirty);
+    main_queryRefresh();
 }
 
 void progress_nextLevel() {
@@ -86,11 +96,12 @@ void progress_nextLevel() {
 
 void progress_registerLineClears(const unsigned lines) {
     progress_score += progress_lineScores[lines] * (progress_level + 1);
+    progress_levelLines += lines;
 
-    if (lines >= progress_linesRemaining)
+    if (progress_levelLines >= 10) {
+        progress_levelLines %= 10;
         progress_nextLevel();
-
-    progress_linesRemaining = (progress_linesRemaining - lines) % 10;
+    }
 }
 
 #endif

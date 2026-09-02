@@ -4,9 +4,6 @@
 #include <stdbool.h>
 #include <cp_base.c>
 
-#include "cell.c"
-#include "board.c"
-
 // ------------ INTERFACE -------------
 
 struct {
@@ -191,9 +188,13 @@ void active_render();
 
 // ---------- IMPLEMENTATION ----------
 
+#include "main.c"
+#include "cell.c"
+#include "board.c"
+#include "progress.c"
+
 unsigned active_getFramesPerGridcell() {
-    // TODO: use level number
-    return active_framesPerGridcell[9];
+    return active_framesPerGridcell[progress_level > 29 ? 29 : progress_level];
 }
 
 void active_nextHash() {
@@ -227,9 +228,14 @@ void active_markDirty() {
     if (!active_current.rotations)
         return;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++)
-        for (unsigned dx = 0; dx < active_current.size; dx++)
-            board_markDirty(active_current.x + dx, active_current.y + dy);
+    const unsigned rotationOffset = active_current.rotation * 16;
+
+    for (unsigned dy = 0; dy < active_current.size; dy++) {
+        for (unsigned dx = 0; dx < active_current.size; dx++) {
+            if (active_current.rotations[rotationOffset + dy*4 + dx])
+                board_markDirty(active_current.x + dx, active_current.y + dy);
+        }
+    }
 }
 
 bool active_isColliding() {
@@ -256,14 +262,15 @@ bool active_isColliding() {
 void active_place() {
     const unsigned rotationOffset = active_current.rotation * 16;
     unsigned dirtyCount = 0;
+    unsigned clearCount = 0;
 
     for (unsigned dy = 0; dy < active_current.size; dy++) {
         const unsigned gy = active_current.y + dy;
-        if (gy >= BOARD_HEIGHT)
-            continue;
+        if (gy >= BOARD_HEIGHT) continue;
 
         for (unsigned dx = 0; dx < active_current.size; dx++) {
             const unsigned gx = active_current.x + dx;
+            if (gx >= BOARD_WIDTH) continue;
 
             if (active_current.rotations[rotationOffset + dy*4 + dx])
                 board_setCell(gx, gy, active_current.cellType);
@@ -279,6 +286,8 @@ void active_place() {
         }
 
         if (full) {
+            clearCount++;
+
             if (gy > dirtyCount)
                 dirtyCount = gy+1;
 
@@ -289,6 +298,9 @@ void active_place() {
 
     if (dirtyCount)
         cp_setMemory(true, dirtyCount * BOARD_WIDTH, board_dirty);
+
+    if (clearCount)
+        progress_registerLineClears(clearCount*10);
 }
 
 void active_fall() {
@@ -384,6 +396,7 @@ void active_render() {
                 cell_render(active_current.cellType, active_current.x + dx, active_current.y + dy);
 
     active_current.changed = false;
+    main_queryRefresh();
 }
 
 #endif
