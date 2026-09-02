@@ -230,12 +230,10 @@ void active_markDirty() {
 
     const unsigned rotationOffset = active_current.rotation * 16;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++) {
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
+    for (unsigned dy = 0; dy < active_current.size; dy++)
+        for (unsigned dx = 0; dx < active_current.size; dx++)
             if (active_current.rotations[rotationOffset + dy*4 + dx])
                 board_markDirty(active_current.x + dx, active_current.y + dy);
-        }
-    }
 }
 
 bool active_isColliding() {
@@ -268,13 +266,9 @@ void active_place() {
         const unsigned gy = active_current.y + dy;
         if (gy >= BOARD_HEIGHT) continue;
 
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
-            const unsigned gx = active_current.x + dx;
-            if (gx >= BOARD_WIDTH) continue;
-
+        for (unsigned dx = 0; dx < active_current.size; dx++)
             if (active_current.rotations[rotationOffset + dy*4 + dx])
-                board_setCell(gx, gy, active_current.cellType);
-        }
+                board_setCell(active_current.x + dx, gy, active_current.cellType);
 
         bool full = true;
 
@@ -288,11 +282,16 @@ void active_place() {
         if (full) {
             clearCount++;
 
-            if (gy > dirtyCount)
+            if (gy+1 > dirtyCount)
                 dirtyCount = gy+1;
 
-            for (unsigned y = gy; y > 0; y--)
-                cp_copyMemory(&board_cells[(y-1) * BOARD_WIDTH], BOARD_WIDTH * sizeof(unsigned), &board_cells[y * BOARD_WIDTH]);
+            for (unsigned y = gy; y > 0; y--) {
+                cp_copyMemory(
+                    board_cells + (y-1) * BOARD_WIDTH,
+                    BOARD_WIDTH * sizeof(unsigned),
+                    board_cells + y * BOARD_WIDTH
+                );
+            }
         }
     }
 
@@ -324,15 +323,18 @@ void active_fall() {
 }
 
 void active_attemptMove(const signed movement) {
-    active_current.x += movement;
+    const unsigned old = active_current.x;
+    const unsigned new = active_current.x + movement;
+
+    active_current.x = new;
     const bool isColliding = active_isColliding();
-    active_current.x -= movement;
+    active_current.x = old;
 
     if (isColliding)
         return;
 
     active_markDirty();
-    active_current.x += movement;
+    active_current.x = new;
     active_current.changed = true;
 }
 
