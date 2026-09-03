@@ -18,6 +18,9 @@ calc:
 	$(OBJCOPY) --set-section-flags .hollyhock_author=contents,strings,readonly $(OUT_CALC) $(OUT_CALC)
 	$(OBJCOPY) --set-section-flags .hollyhock_version=contents,strings,readonly $(OUT_CALC) $(OUT_CALC)
 
+asm:
+	$(CALC_CC) $(CC_FLAGS) $(LD_FLAGS) -fverbose-asm -ffreestanding -fno-builtin -m4a-nofpu -S -fno-lto -D SYSTEM_CALC main.c -o $(OUT_CALC)
+
 pc:
 	$(PC_CC) $(CC_FLAGS) -lraylib -D SYSTEM_PC main.c -o $(OUT_PC)
 
