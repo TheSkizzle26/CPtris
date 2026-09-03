@@ -322,7 +322,9 @@ void active_place() {
     if (clearCount) {
         cp_setMemory(1, dirtyCount * BOARD_WIDTH, board_dirty + BOARD_WIDTH*2);
         progress_registerLineClears(clearCount);
-        active_current.changed = true;
+
+        // don't render piece as it would overwrite the pushed-down cells
+        active_current.changed = false;
     }
 
     active_stall(active_AREDelay[pieceBottom]);
