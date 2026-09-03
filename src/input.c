@@ -24,7 +24,13 @@ void input_tick();
 #include <cp_base.c>
 
 void input_tick() {
-    input_last = input_current;
+    // don't copy directly to avoid memcpy call for some reason?!?
+    input_last.up = input_current.up;
+    input_last.down = input_current.down;
+    input_last.left = input_current.left;
+    input_last.right = input_current.right;
+    input_last.a = input_current.a;
+    input_last.b = input_current.b;
 
     input_current.up = cp_isKeyDown(CP_KEY_8);
     input_current.down = cp_isKeyDown(CP_KEY_2);
