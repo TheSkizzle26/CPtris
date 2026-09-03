@@ -306,8 +306,8 @@ void active_place() {
         if (full) {
             clearCount++;
 
-            if (gy+1 > dirtyCount)
-                dirtyCount = gy+1;
+            if (gy-1 > dirtyCount)
+                dirtyCount = gy-1;
 
             for (unsigned y = gy; y > 0; y--) {
                 cp_copyMemory(
@@ -319,11 +319,11 @@ void active_place() {
         }
     }
 
-    if (dirtyCount)
-        cp_setMemory(true, dirtyCount * BOARD_WIDTH, board_dirty);
-
-    if (clearCount)
+    if (clearCount) {
+        cp_setMemory(1, dirtyCount * BOARD_WIDTH, board_dirty + BOARD_WIDTH*2);
         progress_registerLineClears(clearCount);
+        active_current.changed = true;
+    }
 
     active_stall(active_AREDelay[pieceBottom]);
 }

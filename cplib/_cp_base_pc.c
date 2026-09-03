@@ -60,7 +60,7 @@ void cp_copyMemory(void *source, const size_t size, void *destination) {
     memcpy(destination, source, size);
 }
 
-void cp_setMemory(uint8_t value, size_t count, void *target) {
+void cp_setMemory(const uint8_t value, const size_t count, void *target) {
     memset(target, value, count);
 }
 

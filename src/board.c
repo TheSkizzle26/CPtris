@@ -21,6 +21,7 @@ void board_renderDirty();
 
 // ---------- IMPLEMENTATION ----------
 
+#include "main.c"
 #include "cell.c"
 
 void board_reset() {
@@ -40,12 +41,17 @@ void board_markDirty(const unsigned x, const unsigned y) {
     board_dirty[y * BOARD_WIDTH + x] = 1;
 }
 
+#include <stdio.h>
+
 void board_renderDirty() {
     unsigned i = BOARD_WIDTH*2;
+
+    printf("render dirty\n");
 
     for (unsigned y = 2; y < BOARD_HEIGHT; y++) {
         for (unsigned x = 0; x < BOARD_WIDTH; x++) {
             if (board_dirty[i]) {
+                printf("%u, %u\n", x, y);
                 board_dirty[i] = false;
                 cell_render(board_cells[i], x, y);
             }
@@ -53,6 +59,11 @@ void board_renderDirty() {
             i++;
         }
     }
+
+    printf("end render\n");
+    fflush(stdout);
+
+    main_queryRefresh();
 }
 
 #endif
