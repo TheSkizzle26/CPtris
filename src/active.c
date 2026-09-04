@@ -35,7 +35,7 @@ struct {
 
 unsigned active_hash = 5381;
 unsigned active_gravityTicks;
-unsigned active_stallTicks;
+unsigned active_areTicks;
 bool active_dirty;
 
 struct {
@@ -121,7 +121,7 @@ unsigned active_AREDelay[22] = {
 };
 
 unsigned active_getFallDelay();
-void active_stall(unsigned ticks);
+void active_startARE(unsigned ticks);
 void active_nextHash();
 void active_spawnNextPiece();
 void active_markGridDirty();
@@ -149,8 +149,8 @@ unsigned active_getFallDelay() {
     return active_fallDelay[progress_level > 29 ? 29 : progress_level];
 }
 
-void active_stall(const unsigned ticks) {
-    active_stallTicks = ticks;
+void active_startARE(const unsigned ticks) {
+    active_areTicks = ticks;
 }
 
 void active_nextHash() {
@@ -259,7 +259,7 @@ void active_place() {
         progress_registerLineClears(clearCount);
     }
 
-    active_stall(active_AREDelay[pieceBottom]);
+    active_startARE(active_AREDelay[pieceBottom]);
 }
 
 void active_fall() {
@@ -371,10 +371,10 @@ void active_tick() {
     active_nextHash();
     active_handleInput();
 
-    if (active_stallTicks) {
-        active_stallTicks--;
+    if (active_areTicks) {
+        active_areTicks--;
 
-        if (!active_stallTicks)
+        if (!active_areTicks)
             active_spawnNextPiece();
     } else {
         active_notStalled();
