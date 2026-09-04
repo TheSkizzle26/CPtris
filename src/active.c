@@ -6,17 +6,18 @@
 // ------------ INTERFACE -------------
 
 struct {
-    bool changed;
     unsigned x;
     unsigned y;
     unsigned rotation;
-    unsigned gravityTicks;
-    unsigned piece;
+} active_transform;
+
+// quick access to piece information
+struct {
     unsigned cellType;
     unsigned size;
     unsigned rotationCount;
     bool *rotations;
-} active_current;
+} active_piece;
 
 struct {
     unsigned leftTicks;
@@ -25,143 +26,73 @@ struct {
     bool moveRight;
 } active_das;
 
-unsigned active_stallTicks;
-unsigned active_lastPiece;
 unsigned active_hash = 5381;
+unsigned active_gravityTicks;
+unsigned active_stallTicks;
+bool active_dirty;
 
-bool active_templateCells[7][64] = {
-    { // T
-        0, 0, 0, 0,
-        1, 1, 1, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
-
-        0, 1, 0, 0,
-        1, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
-
-        0, 1, 0, 0,
-        1, 1, 1, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-
-        0, 1, 0, 0,
-        0, 1, 1, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
+struct {
+    bool cells[7][64];
+    unsigned rotations[7];
+    unsigned size[7];
+    unsigned cellType[7];
+} active_templates = {
+    .cells = {
+        { // T
+            0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+        }, { // J
+            0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+            1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+        }, { // Z
+            0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+            0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+        }, { // O
+            1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        }, { // S
+            0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+            1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+        }, { // L
+            0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        }, { // I
+            0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0,
+        }
     },
-    { // J
-        0, 0, 0, 0,
-        1, 1, 1, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 0,
-
-        0, 1, 0, 0,
-        0, 1, 0, 0,
-        1, 1, 0, 0,
-        0, 0, 0, 0,
-
-        1, 0, 0, 0,
-        1, 1, 1, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-
-        0, 1, 1, 0,
-        0, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
+    .rotations = {
+        4, // T
+        4, // J
+        2, // Z
+        1, // O
+        2, // S
+        4, // L
+        2  // I
     },
-    { // Z
-        0, 0, 0, 0,
-        1, 1, 0, 0,
-        0, 1, 1, 0,
-        0, 0, 0, 0,
-
-        0, 0, 1, 0,
-        0, 1, 1, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
+    .size = {
+        3, // T
+        3, // J
+        3, // Z
+        2, // O
+        3, // S
+        3, // L
+        4  // I
     },
-    { // O
-        1, 1, 0, 0,
-        1, 1, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-    },
-    { // S
-        0, 0, 0, 0,
-        0, 1, 1, 0,
-        1, 1, 0, 0,
-        0, 0, 0, 0,
-
-        1, 0, 0, 0,
-        1, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
-    },
-    { // L
-        0, 0, 0, 0,
-        1, 1, 1, 0,
-        1, 0, 0, 0,
-        0, 0, 0, 0,
-
-        1, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 0,
-
-        0, 0, 1, 0,
-        1, 1, 1, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-
-        0, 1, 0, 0,
-        0, 1, 0, 0,
-        0, 1, 1, 0,
-        0, 0, 0, 0,
-    },
-    { // I
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-        1, 1, 1, 1,
-        0, 0, 0, 0,
-
-        0, 0, 1, 0,
-        0, 0, 1, 0,
-        0, 0, 1, 0,
-        0, 0, 1, 0,
+    .cellType = {
+        3, // T
+        2, // J
+        1, // Z
+        3, // O
+        2, // S
+        1, // L
+        3  // I
     }
-};
-
-unsigned active_templateRotations[7] = {
-    4, // T
-    4, // J
-    2, // Z
-    1, // O
-    2, // S
-    4, // L
-    2  // I
-};
-
-unsigned active_templateSizes[7] = {
-    3, // T
-    3, // J
-    3, // Z
-    2, // O
-    3, // S
-    3, // L
-    4  // I
-};
-
-unsigned active_templateCellTypes[7] = {
-    3, // T
-    2, // J
-    1, // Z
-    3, // O
-    2, // S
-    1, // L
-    3  // I
 };
 
 unsigned active_framesPerGridcell[30] = {
@@ -173,8 +104,8 @@ unsigned active_framesPerGridcell[30] = {
     2,  2,  2,  2,  1
 };
 
-unsigned active_AREDelay[] = {
-    0, 0, // invisible
+unsigned active_AREDelay[22] = {
+    18, 18, // invisible
     18, 18, 18, 18,
     16, 16, 16, 16,
     14, 14, 14, 14,
@@ -185,14 +116,14 @@ unsigned active_AREDelay[] = {
 unsigned active_getFramesPerGridcell();
 void active_stall(unsigned ticks);
 void active_nextHash();
-void active_nextPiece();
+void active_spawnNextPiece();
 void active_markDirty();
 bool active_isColliding();
 void active_place();
 void active_fall();
 void active_attemptMove(signed movement);
 void active_attemptRotation(const signed rotation);
-void active_DAS();
+void active_handleDAS();
 void active_notStalled();
 void active_tick();
 void active_render();
@@ -219,49 +150,44 @@ void active_nextHash() {
     active_hash = (active_hash << 5) + active_hash + cp_getTick() % 128;
 }
 
-void active_nextPiece() {
-    unsigned piece = active_hash % 8;
-    if ((piece == active_lastPiece) || (piece == 7 /* dummy */)) {
-        active_nextHash();
-        piece = active_hash % 7;
-    }
+void active_spawnNextPiece() {
+    unsigned piece = 0;
 
-    active_lastPiece = active_current.piece;
-    
-    const unsigned size = active_templateSizes[piece];
+    const unsigned size = active_templates.size[piece];
 
-    active_current.changed = true;
-    active_current.x = (BOARD_WIDTH - size) >> 1;
-    active_current.y = size - 2;
-    active_current.rotation = 0;
-    active_current.gravityTicks = active_getFramesPerGridcell();
-    active_current.piece = piece;
-    active_current.cellType = active_templateCellTypes[piece];
-    active_current.size = size;
-    active_current.rotationCount = active_templateRotations[piece];
-    active_current.rotations = active_templateCells[piece];
+    active_transform.x = (BOARD_WIDTH - size) >> 1;
+    active_transform.y = size - 2;
+    active_transform.rotation = 0;
+
+    active_piece.cellType = active_templates.cellType[piece];
+    active_piece.size = size;
+    active_piece.rotationCount = active_templates.rotations[piece];
+    active_piece.rotations = active_templates.cells[piece];
+
+    active_dirty = true;
+    active_gravityTicks = active_getFramesPerGridcell();
 }
 
 void active_markDirty() {
-    if (!active_current.rotations)
+    if (!active_piece.rotations)
         return;
 
-    const unsigned rotationOffset = active_current.rotation * 16;
+    const unsigned rotationOffset = active_transform.rotation * 16;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++)
-        for (unsigned dx = 0; dx < active_current.size; dx++)
-            if (active_current.rotations[rotationOffset + dy*4 + dx])
-                board_markDirty(active_current.x + dx, active_current.y + dy);
+    for (unsigned dy = 0; dy < active_piece.size; dy++)
+        for (unsigned dx = 0; dx < active_piece.size; dx++)
+            if (active_piece.rotations[rotationOffset + dy*4 + dx])
+                board_markDirty(active_transform.x + dx, active_transform.y + dy);
 }
 
 bool active_isColliding() {
-    const unsigned rotationOffset = active_current.rotation * 16;
+    const unsigned rotationOffset = active_transform.rotation * 16;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++) {
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
-            if (active_current.rotations[rotationOffset + dy*4 + dx]) {
-                const unsigned gx = active_current.x + dx;
-                const unsigned gy = active_current.y + dy;
+    for (unsigned dy = 0; dy < active_piece.size; dy++) {
+        for (unsigned dx = 0; dx < active_piece.size; dx++) {
+            if (active_piece.rotations[rotationOffset + dy*4 + dx]) {
+                const unsigned gx = active_transform.x + dx;
+                const unsigned gy = active_transform.y + dy;
 
                 if (gx >= BOARD_WIDTH || gy >= BOARD_HEIGHT)
                     return true;
@@ -276,18 +202,18 @@ bool active_isColliding() {
 }
 
 void active_place() {
-    const unsigned rotationOffset = active_current.rotation * 16;
+    const unsigned rotationOffset = active_transform.rotation * 16;
     unsigned dirtyCount = 0;
     unsigned clearCount = 0;
     unsigned pieceBottom = 0;
 
-    for (unsigned dy = 0; dy < active_current.size; dy++) {
-        const unsigned gy = active_current.y + dy;
+    for (unsigned dy = 0; dy < active_piece.size; dy++) {
+        const unsigned gy = active_transform.y + dy;
         if (gy >= BOARD_HEIGHT) continue;
 
-        for (unsigned dx = 0; dx < active_current.size; dx++) {
-            if (active_current.rotations[rotationOffset + dy*4 + dx]) {
-                board_setCell(active_current.x + dx, gy, active_current.cellType);
+        for (unsigned dx = 0; dx < active_piece.size; dx++) {
+            if (active_piece.rotations[rotationOffset + dy*4 + dx]) {
+                board_setCell(active_transform.x + dx, gy, active_piece.cellType);
 
                 if (gy > pieceBottom)
                     pieceBottom = gy;
@@ -324,25 +250,25 @@ void active_place() {
         progress_registerLineClears(clearCount);
 
         // don't render piece as it would overwrite the pushed-down cells
-        active_current.changed = false;
+        active_dirty = false;
     }
 
     active_stall(active_AREDelay[pieceBottom]);
 }
 
 void active_fall() {
-    active_current.gravityTicks--;
+    active_gravityTicks--;
 
-    if (!active_current.gravityTicks) {
-        active_current.gravityTicks = active_getFramesPerGridcell();
+    if (!active_gravityTicks) {
+        active_gravityTicks = active_getFramesPerGridcell();
         
         active_markDirty();
         
-        active_current.y++;
-        active_current.changed = true;
+        active_transform.y++;
+        active_dirty = true;
 
         if (active_isColliding()) {
-            active_current.y--;
+            active_transform.y--;
             active_place();
             // next piece is spawned after ARE
         }
@@ -350,38 +276,38 @@ void active_fall() {
 }
 
 void active_attemptMove(const signed movement) {
-    const unsigned old = active_current.x;
-    const unsigned new = active_current.x + movement;
+    const unsigned old = active_transform.x;
+    const unsigned new = active_transform.x + movement;
 
-    active_current.x = new;
+    active_transform.x = new;
     const bool isColliding = active_isColliding();
-    active_current.x = old;
+    active_transform.x = old;
 
     if (isColliding)
         return;
 
     active_markDirty();
-    active_current.x = new;
-    active_current.changed = true;
+    active_transform.x = new;
+    active_dirty = true;
 }
 
 void active_attemptRotation(const signed rotation) {
-    const unsigned old = active_current.rotation;
-    const unsigned new = (active_current.rotation + rotation) % active_current.rotationCount;
+    const unsigned old = active_transform.rotation;
+    const unsigned new = (active_transform.rotation + rotation) % active_piece.rotationCount;
 
-    active_current.rotation = new;
+    active_transform.rotation = new;
     const bool isColliding = active_isColliding();
-    active_current.rotation = old;
+    active_transform.rotation = old;
 
     if (isColliding)
         return;
 
     active_markDirty();
-    active_current.rotation = new;
-    active_current.changed = true;
+    active_transform.rotation = new;
+    active_dirty = true;
 }
 
-void active_DAS() {
+void active_handleDAS() {
     active_das.moveLeft = false;
     active_das.moveRight = false;
 
@@ -427,30 +353,30 @@ void active_notStalled() {
 
 void active_tick() {
     active_nextHash();
-    active_DAS();
+    active_handleDAS();
 
     if (active_stallTicks) {
         active_stallTicks--;
 
         if (!active_stallTicks)
-            active_nextPiece();
+            active_spawnNextPiece();
     } else {
         active_notStalled();
     }
 }
 
 void active_render() {
-    if (!active_current.changed)
+    if (!active_dirty)
         return;
 
-    const unsigned rotationOffset = active_current.rotation * 16;
+    const unsigned rotationOffset = active_transform.rotation * 16;
 
-    for (unsigned dy = active_current.y < 2 ? 2 - active_current.y : 0; dy < active_current.size; dy++)
-        for (unsigned dx = 0; dx < active_current.size; dx++)
-            if (active_current.rotations[rotationOffset + dy*4 + dx])
-                cell_render(active_current.cellType, active_current.x + dx, active_current.y + dy);
+    for (unsigned dy = active_transform.y < 2 ? 2 - active_transform.y : 0; dy < active_piece.size; dy++)
+        for (unsigned dx = 0; dx < active_piece.size; dx++)
+            if (active_piece.rotations[rotationOffset + dy*4 + dx])
+                cell_render(active_piece.cellType, active_transform.x + dx, active_transform.y + dy);
 
-    active_current.changed = false;
+    active_dirty = false;
     main_queryRefresh();
 }
 

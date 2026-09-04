@@ -72,7 +72,7 @@ void progress_reset() {
 
     progress_loadLevel(13);
     board_reset();
-    active_nextPiece();
+    active_spawnNextPiece();
 }
 
 void progress_loadLevel(const unsigned level) {
