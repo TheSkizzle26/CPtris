@@ -2,6 +2,7 @@
 #define ACTIVE
 
 #include <stdbool.h>
+#include <stdint.h>
 
 // ------------ INTERFACE -------------
 
@@ -19,11 +20,17 @@ struct {
     bool *rotations;
 } active_piece;
 
+union {
+    struct {
+        bool left;
+        bool right;
+    };
+    uint16_t any;
+} active_buffer;
+
 struct {
-    unsigned leftTicks;
-    unsigned rightTicks;
-    bool moveLeft;
-    bool moveRight;
+    unsigned left;
+    unsigned right;
 } active_das;
 
 unsigned active_hash = 5381;
@@ -121,8 +128,8 @@ void active_markDirty();
 bool active_isColliding();
 void active_place();
 void active_fall();
-void active_attemptMove(signed movement);
-void active_attemptRotation(const signed rotation);
+bool active_attemptMove(signed movement);
+bool active_attemptRotation(const signed rotation);
 void active_handleDAS();
 void active_notStalled();
 void active_tick();
@@ -275,7 +282,7 @@ void active_fall() {
     }
 }
 
-void active_attemptMove(const signed movement) {
+bool active_attemptMove(const signed movement) {
     const unsigned old = active_transform.x;
     const unsigned new = active_transform.x + movement;
 
@@ -284,14 +291,16 @@ void active_attemptMove(const signed movement) {
     active_transform.x = old;
 
     if (isColliding)
-        return;
+        return false;
 
     active_markDirty();
     active_transform.x = new;
     active_dirty = true;
+
+    return true;
 }
 
-void active_attemptRotation(const signed rotation) {
+bool active_attemptRotation(const signed rotation) {
     const unsigned old = active_transform.rotation;
     const unsigned new = (active_transform.rotation + rotation) % active_piece.rotationCount;
 
@@ -300,32 +309,43 @@ void active_attemptRotation(const signed rotation) {
     active_transform.rotation = old;
 
     if (isColliding)
-        return;
+        return false;
 
     active_markDirty();
     active_transform.rotation = new;
     active_dirty = true;
+
+    return true;
 }
 
-void active_handleDAS() {
-    active_das.moveLeft = false;
-    active_das.moveRight = false;
+void active_handleInput() {
+    // stop buffering if button was lifted
+    active_buffer.left &= input_current.left;
+    active_buffer.right &= input_current.right;
+
+    // buffer movement on button press
+    active_buffer.left |= (input_current.left && !input_last.left);
+    active_buffer.right |= (input_current.right && !input_last.right);
+
+    // DAS
+    // Buffer input every 6 frames after
+    // being held down for 16 frames.
 
     if (input_current.left) {
-        active_das.leftTicks++;
-        if (active_das.leftTicks == 16) {
-            active_das.moveLeft = true;
-            active_das.leftTicks = 10;
+        active_das.left++;
+        if (active_das.left == 16) {
+            active_buffer.left = true;
+            active_das.left = 10;
         }
-    } else active_das.leftTicks = 0;
+    } else active_das.left = 0;
 
     if (input_current.right) {
-        active_das.rightTicks++;
-        if (active_das.rightTicks == 16) {
-            active_das.moveRight = true;
-            active_das.rightTicks = 10;
+        active_das.right++;
+        if (active_das.right == 16) {
+            active_buffer.right = true;
+            active_das.right = 10;
         }
-    } else active_das.rightTicks = 0;
+    } else active_das.right = 0;
 }
 
 void active_notStalled() {
@@ -337,23 +357,19 @@ void active_notStalled() {
     if (rotation)
         active_attemptRotation(rotation);
 
-    const signed movement = (
-        (input_current.right && !input_last.right) -
-        (input_current.left && !input_last.left)
-    ) + (
-        active_das.moveRight -
-        active_das.moveLeft
-    );
+    if (active_buffer.any) {
+        const signed movement = (active_buffer.right - active_buffer.left);
 
-    if (movement)
-        active_attemptMove(movement);
+        if (active_attemptMove(movement))
+            active_buffer.any = 0;
+    }
 
     active_fall();
 }
 
 void active_tick() {
     active_nextHash();
-    active_handleDAS();
+    active_handleInput();
 
     if (active_stallTicks) {
         active_stallTicks--;
