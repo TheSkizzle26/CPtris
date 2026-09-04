@@ -174,7 +174,7 @@ void active_spawnNextPiece() {
 
     const unsigned size = active_templates.size[piece];
 
-    active_transform.x = (BOARD_WIDTH - size) >> 1;
+    active_transform.x = ((BOARD_WIDTH - size) >> 1) + size % 2;
     active_transform.y = size - 2;
     active_transform.rotation = 0;
 
