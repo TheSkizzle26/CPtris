@@ -267,9 +267,7 @@ void active_fall() {
 
     if (!active_gravityTicks) {
         active_gravityTicks = active_getFallDelay();
-
         active_markGridDirty();
-
         active_transform.y++;
 
         if (active_isColliding()) {
