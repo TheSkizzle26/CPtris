@@ -34,6 +34,7 @@ struct {
 } active_das;
 
 unsigned active_hash = 5381;
+unsigned active_nextPiece = 5381 % 7;
 unsigned active_gravityTicks;
 unsigned active_areTicks;
 bool active_dirty;
@@ -122,7 +123,8 @@ unsigned active_AREDelay[22] = {
 
 unsigned active_getFallDelay();
 void active_startARE(unsigned ticks);
-void active_nextHash();
+unsigned active_nextHash();
+unsigned active_getNextPiece(unsigned lastPiece);
 void active_spawnNextPiece();
 void active_markGridDirty();
 bool active_isColliding();
@@ -153,12 +155,22 @@ void active_startARE(const unsigned ticks) {
     active_areTicks = ticks;
 }
 
-void active_nextHash() {
-    active_hash = (active_hash << 5) + active_hash + cp_getTick() % 128;
+unsigned active_nextHash() {
+    return (active_hash = (active_hash << 5) + active_hash + cp_getTick());
+}
+
+unsigned active_getNextPiece(const unsigned lastPiece) {
+    const unsigned piece = active_hash % 8;
+
+    if ((piece == lastPiece) || (piece == 7 /* dummy */))
+        return active_nextHash() % 7;
+
+    return piece;
 }
 
 void active_spawnNextPiece() {
-    unsigned piece = 0;
+    const unsigned piece = active_nextPiece;
+    active_nextPiece = active_getNextPiece(active_nextPiece);
 
     const unsigned size = active_templates.size[piece];
 
