@@ -95,7 +95,7 @@ struct {
     }
 };
 
-unsigned active_framesPerGridcell[30] = {
+unsigned active_fallDelay[30] = {
     48, 43, 38, 33, 28,
     23, 18, 13, 8,  6,
     5,  5,  5,  4,  4,
@@ -113,7 +113,7 @@ unsigned active_AREDelay[22] = {
     10, 10, 10, 10
 };
 
-unsigned active_getFramesPerGridcell();
+unsigned active_getFallDelay();
 void active_stall(unsigned ticks);
 void active_nextHash();
 void active_spawnNextPiece();
@@ -138,8 +138,8 @@ void active_render();
 #include "board.c"
 #include "progress.c"
 
-unsigned active_getFramesPerGridcell() {
-    return active_framesPerGridcell[progress_level > 29 ? 29 : progress_level];
+unsigned active_getFallDelay() {
+    return active_fallDelay[progress_level > 29 ? 29 : progress_level];
 }
 
 void active_stall(const unsigned ticks) {
@@ -165,7 +165,7 @@ void active_spawnNextPiece() {
     active_piece.rotations = active_templates.cells[piece];
 
     active_dirty = true;
-    active_gravityTicks = active_getFramesPerGridcell();
+    active_gravityTicks = active_getFallDelay();
 }
 
 void active_markDirty() {
@@ -260,7 +260,7 @@ void active_fall() {
     active_gravityTicks--;
 
     if (!active_gravityTicks) {
-        active_gravityTicks = active_getFramesPerGridcell();
+        active_gravityTicks = active_getFallDelay();
         
         active_markDirty();
         
