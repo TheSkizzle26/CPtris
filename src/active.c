@@ -124,7 +124,7 @@ unsigned active_getFallDelay();
 void active_stall(unsigned ticks);
 void active_nextHash();
 void active_spawnNextPiece();
-void active_markDirty();
+void active_markGridDirty();
 bool active_isColliding();
 void active_place();
 void active_fall();
@@ -175,7 +175,7 @@ void active_spawnNextPiece() {
     active_gravityTicks = active_getFallDelay();
 }
 
-void active_markDirty() {
+void active_markGridDirty() {
     if (!active_piece.rotations)
         return;
 
@@ -209,6 +209,8 @@ bool active_isColliding() {
 }
 
 void active_place() {
+    // TODO: refactor
+
     const unsigned rotationOffset = active_transform.rotation * 16;
     unsigned dirtyCount = 0;
     unsigned clearCount = 0;
@@ -255,9 +257,6 @@ void active_place() {
     if (clearCount) {
         cp_setMemory(1, dirtyCount * BOARD_WIDTH, board_dirty + BOARD_WIDTH*2);
         progress_registerLineClears(clearCount);
-
-        // don't render piece as it would overwrite the pushed-down cells
-        active_dirty = false;
     }
 
     active_stall(active_AREDelay[pieceBottom]);
@@ -268,16 +267,19 @@ void active_fall() {
 
     if (!active_gravityTicks) {
         active_gravityTicks = active_getFallDelay();
-        
-        active_markDirty();
-        
+
+        active_markGridDirty();
+
         active_transform.y++;
-        active_dirty = true;
 
         if (active_isColliding()) {
             active_transform.y--;
             active_place();
             // next piece is spawned after ARE
+        } else {
+            // We don't mark it dirty when placing it above,
+            // because that would overdraw the shifted-down grid.
+            active_dirty = true;
         }
     }
 }
@@ -293,7 +295,7 @@ bool active_attemptMove(const signed movement) {
     if (isColliding)
         return false;
 
-    active_markDirty();
+    active_markGridDirty();
     active_transform.x = new;
     active_dirty = true;
 
@@ -311,7 +313,7 @@ bool active_attemptRotation(const signed rotation) {
     if (isColliding)
         return false;
 
-    active_markDirty();
+    active_markGridDirty();
     active_transform.rotation = new;
     active_dirty = true;
 
