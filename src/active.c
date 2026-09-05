@@ -170,7 +170,6 @@ unsigned active_getNextPiece(const unsigned lastPiece) {
 
 void active_spawnNextPiece() {
     const unsigned piece = active_nextPiece;
-    active_nextPiece = active_getNextPiece(active_nextPiece);
 
     const unsigned size = active_templates.size[piece];
 
@@ -185,6 +184,19 @@ void active_spawnNextPiece() {
 
     active_dirty = true;
     active_gravityTicks = active_getFallDelay();
+
+    // generate next piece
+    active_nextPiece = active_getNextPiece(active_nextPiece);
+    for (unsigned y = 0; y < 4; y++) {
+        for (unsigned x = 0; x < 4; x++) {
+            cell_renderPreview(
+                active_templates.cells[active_nextPiece][y*4 + x]
+                * active_templates.cellType[active_nextPiece],
+                x,
+                y
+            );
+        }
+    }
 }
 
 void active_markGridDirty() {

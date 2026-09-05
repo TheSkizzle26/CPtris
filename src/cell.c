@@ -129,7 +129,7 @@ void cell_render(const unsigned type, const unsigned gridX, const unsigned gridY
 
 void cell_renderPreview(const unsigned type, const unsigned gridX, const unsigned gridY) {
     const unsigned x = 250 + gridX * (CELL_SIZE + 1) * CELL_P_SCALE;
-    const unsigned y = 50 + gridY * (CELL_SIZE + 1) * CELL_P_SCALE;
+    const unsigned y = 220 + gridY * (CELL_SIZE + 1) * CELL_P_SCALE;
 
     for (unsigned dy = 0; dy < CELL_P_PIXEL_SIZE; dy++) {
         cp_copyMemory(
