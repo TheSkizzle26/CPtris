@@ -197,6 +197,8 @@ void active_spawnNextPiece() {
             );
         }
     }
+
+    main_queryRefresh();
 }
 
 void active_markGridDirty() {
