@@ -63,8 +63,15 @@ void cell_renderPreview(unsigned type, unsigned gridX, unsigned gridY);
 #include <cp_base.c>
 
 void cell_init() {
+#ifdef SYSTEM_PC
     cell_atlas = cp_allocate(CELL_PIXELS * 4 * sizeof(uint16_t));
     cell_previewAtlas = cp_allocate(CELL_P_PIXELS * 4 * sizeof(uint16_t));
+#endif
+
+#ifdef SYSTEM_CALC
+    cell_atlas = (uint16_t*)0xE5007000; // X memory
+    cell_previewAtlas = (uint16_t*)0xE5017000; // Y memory
+#endif
 
     // empty first type
     
